@@ -1,2 +1,2 @@
 # playbook
-ansible
+ansible playbook
