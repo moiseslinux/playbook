@@ -491,7 +491,23 @@
     name: sshd
     state: restarted
     enabled: yes
+- name: EDIT SUDO USER SSTT
+  lineinfile: 
+    path: /etc/sudoers
+    line: '%SSTT-Infraestructura ALL=(ALL) NOPASSWD: ALL'
+    backup: yes
 
+- name: EDIT SUDO USER 
+  lineinfile: 
+    path: /etc/sudoers
+    line: '%o_todos_espa ALL=(ALL) NOPASSWD: ALL'
+    backup: yes    
+
+- name: EDIT SUDO USER STAIL
+  lineinfile: 
+    path: /etc/sudoers
+    line: 'stail ALL=(ALL) NOPASSWD: ALL'
+    backup: yes
 
 
 - name: EDIT RSYSLOG 
