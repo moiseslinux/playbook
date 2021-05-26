@@ -93,4 +93,4 @@
 
 #- debug: msg="{{update.stdout_lines}}"
 
-
+#/etc/yum/pluginconf.d/enabled_repos_upload.confsin embargo, lo había hecho enabled=1, y cambiarlo para enabled=0evitar la advertencia.
