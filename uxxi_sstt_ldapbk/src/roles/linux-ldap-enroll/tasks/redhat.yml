@@ -34,8 +34,9 @@
   with_items:
     - 53
     - 636
+    - 88
     - 445
-   
+    - 135
 
 - name: CHECK PORT  LDAPS 636  AWS
   when: ansible_default_ipv4.address | ipaddr('172.30.0.0/16') or ansible_default_ipv4.address | ipaddr('172.31.0.0/16')
@@ -50,7 +51,7 @@
     - 53
     - 636
     - 445
-  
+    - 135
 
 
 - name: CHECK  PORT  LDAP 636   UXXI
@@ -66,7 +67,7 @@
     - 53
     - 636
     - 445
-   
+    - 135
 ######################ELIMINAR DEL REGISTRO DE DOMINIO ANTERIOR CON KERBEROS##########
 - name: MENSAJE
   debug:
@@ -286,22 +287,13 @@
 
 - name: EDIT NSLCD_ARSYS
   #when: keberos_installed.rc == 0
-  when: ansible_default_ipv4.address | ipaddr('172.23.0.0/16') or ansible_default_ipv4.address | ipaddr('172.21.0.0/16') 
+  when: ansible_default_ipv4.address | ipaddr('172.23.0.0/16') or ansible_default_ipv4.address | ipaddr('172.21.0.0/16')
   copy:
     src: templates/nslcd-arsys.conf
     dest: /etc/nslcd.conf
     owner: root
     group: root
     mode: 0600
-    backup: yes
-
-- name: EDIT NSLCD_ARSYS 6
-  #when: keberos_installed.rc == 0
-  when:  ansible_os_family == "RedHat" and ansible_distribution_major_version == '6'
-  lineinfile: 
-    path: /etc/nslcd.conf
-    state: absent 
-    line: 'ignorecase yes'
     backup: yes
 
 - name: EDIT NSLCD_UXXI
@@ -567,7 +559,7 @@
     backup: yes 
   when: ec2user.rc == 0
 ###opc
-- name: comprueba que el usuario existe opc
+- name: comprueba que el usuario existe ec2-user
   command: id opc
   register: opc
   ignore_errors: yes
@@ -596,18 +588,11 @@
 
 
 - name: SSHD RELOAD
-  when: keberos_installed.rc == 1 and realm_installed.rc == 1 and ansible_os_family == "RedHat" and ansible_distribution_major_version == '7'
+  when: keberos_installed.rc == 1 and realm_installed.rc == 1
   systemd:
     name: sshd
     state: restarted
     enabled: yes
-
-- name: NSLCD RELOAD V6
-  when: ansible_os_family == "RedHat" and ansible_distribution_major_version == '6' 
-  ansible.builtin.service:
-    name: sshd
-    enabled: yes
-    state: restarted 
 
 - name: INSTALL NTP
   when: ansible_os_family == "RedHat" and ansible_distribution_major_version == '7'
@@ -645,7 +630,6 @@
   systemd:
     name: sshd
     state: restarted
-  ignore_errors: yes
 #######################################
 - name: EDIT SUDO USER SSTT
   lineinfile: 
@@ -667,7 +651,7 @@
 ########### samba
 
 - name: check if SAMBA is installed
-  shell:  rpm -qa  | grep samba-winbind*
+  shell:  rpm -qa  | grep samba
   register: samba_installed
   ignore_errors: True
   check_mode: False
@@ -721,7 +705,6 @@
     state: present
     line: "\t{{ item }}"
   loop: "{{ dc.smblines }}"
-  register: samba_edit
 
 
 - name: AGREGAR GRUPO DE AD VALID USERS ORACLE12
@@ -783,14 +766,13 @@
   shell: sed -i 's/@o_todos//g' "/etc/samba/smb.conf"
   
 
-- name: MAKE SURE SAMBA SERVICE IS RUNNING 7 y 8
+- name: MAKE SURE SAMBA SERVICE IS RUNNING
   #when: keberos_installed.rc == 1
-  when: samba_installed.rc == 0 and ansible_os_family == "RedHat" and ansible_distribution_major_version >= '7'
+  when: samba_installed.rc == 0
   systemd:
     state: restarted
     name: smb
     enabled: yes
-  
 
 - name: CHECK IF WINBIND is installed
   shell:  rpm -qa  | grep samba-winbind.x86_64
@@ -810,12 +792,11 @@
   when: winbind_installed.rc == 1
 
 - name: MAKE SURE WINBIND SERVICE IS RUNNING
-  when: winbind_installed.rc == 0 and ansible_os_family == "RedHat" and ansible_distribution_major_version >= '7'
+  when: winbind_installed.rc == 0
   systemd:
     state: restarted
     name: winbind
     enabled: yes
-  ignore_errors: True
 
 - name: EDIT PAM_WINBIND
   when: samba_installed.rc == 0
@@ -838,7 +819,7 @@
     backup: yes
 
 - name: MAKE SURE SERVICES ARE RUNNING
-  when: samba_installed.rc == 0 and winbind_installed.rc == 0 and  ansible_os_family == "RedHat" and ansible_distribution_major_version >= '7'
+  when: samba_installed.rc == 0 and winbind_installed.rc == 0
   systemd:
     state: restarted
     name: "{{ item }}"
@@ -855,26 +836,11 @@
   loop: "{{ dc.graylog }}"
 
 - name: RESTART RSYSLOG SERVICE
-  when:  ansible_os_family == "RedHat" and ansible_distribution_major_version >= '7'
+  #when: keberos_installed.rc == 1
   systemd:
     name: rsyslog
     state: restarted
     enabled: yes
-  
-
-- name: RESTART RSYSLOG SERVICE 6
-  when: ansible_os_family == "RedHat" and ansible_distribution_major_version == '6' 
-  ansible.builtin.service:
-    name: rsyslog
-    enabled: yes
-    state: restarted 
-
-- name: SAMBA RELOAD V6
-  when: ansible_os_family == "RedHat" and ansible_distribution_major_version == '6' 
-  ansible.builtin.service:
-    name: smb
-    enabled: yes
-    state: restarted
 
 - name: CREAR USUARIO UXXI
   when: winbind_installed.rc == 0 or samba_installed.rc == 0

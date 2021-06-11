@@ -1,0 +1,13 @@
+---
+- debug:
+      msg:
+      - "Distribution {{ hostvars[inventory_hostname].ansible_distribution }}"
+      - "Version {{ hostvars[inventory_hostname].ansible_distribution_version }}"
+  register: version 
+
+- name: MENSAJE
+  debug:
+    msg:
+      - '- La versión del sistema operativo es muy antiguo '
+      
+        
